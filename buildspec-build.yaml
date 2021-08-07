@@ -21,16 +21,15 @@ env:
 phases:
   install:
     runtime-versions:
-      python: 3.7
+      python: 3.8
     commands:
       # Install Git Client
       - apt-get update
-      - apt-get install --assume-yes git docker sudo
-      - pip3 uninstall --yes awscli
-      - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-      - unzip awscliv2.zip
-      - sudo ./aws/install
-      - pip3 install aws-sam-cli
+      # - apt-get install --assume-yes git docker sudo
+      # - pip3 uninstall --yes awscli
+      # - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+      # - unzip awscliv2.zip
+      # - sudo ./aws/install
   pre_build:
     commands:
       - echo Build started on `date`
@@ -43,19 +42,6 @@ phases:
       - aws configure set profile.deployrole.source_profile default
       - aws configure set profile.deployrole.role_arn $DEPLOYMENT_ROLE
 
-      - echo Configuring Git Client to use AWS CLI Creds
-      - git --version
-      - git config --global credential.helper '!aws codecommit credential-helper $@'
-      - git config --global credential.UseHttpPath true
-      - echo Cloning $REPOSITORY_NAME
-      - git clone https://git-codecommit.$AWS_REGION.amazonaws.com/v1/repos/$REPOSITORY_NAME
-      - echo Checking out Branch/CommitID  $BRANCH_NAME / $COMMIT_ID
-      - cd $REPOSITORY_NAME
-      # TODO use $BRANCH_NAME if not $COMMIT_ID
-      - git checkout $COMMIT_ID
-      - echo Renaming tmp templates directory back to normal
-      - mv templates_tmp/* templates/
-      - echo Reading in env file $ENV_FILE
       - echo Reading in env file $ENV_FILE
       - cp $ENV_FILE .env
       - chmod 777 .env
@@ -74,54 +60,8 @@ phases:
 
       - echo validate awscli version
       - aws --version
-      - sam --version
 
-      - echo prepare template parameters
-      - envsubst < template.params > .params.tmp
-      - cat .params.tmp | sed 's/\r//g' | sed 's/\n//g' > .params
-      - cat .params
-  
-      - echo Building and Packaging Cloudformation template for environment $ENVIRONMENT
-      - |
-        sam build \
-          --region ${AWS_REGION} \
-          ${SAM_DEBUG_OPTION}
-      
-      - |
-        sam package \
-          --template-file .aws-sam/build/template.yaml \
-          --output-template-file template-out.yaml \
-          --s3-bucket ${CLOUDFORMATION_BUCKET} \
-          --s3-prefix ${APP_CODE} \
-          --region ${AWS_REGION} \
-          ${SAM_DEBUG_OPTION}
-
-      - |
-        sam deploy \
-          --template-file template-out.yaml \
-          --s3-bucket ${CLOUDFORMATION_BUCKET} \
-          --s3-prefix ${APP_CODE} \
-          --stack-name "${APP_CODE}-${ENVIRONMENT}-serverless-template" \
-          --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
-          --no-fail-on-empty-changeset \
-          --profile deployrole \
-          --region ${AWS_REGION} \
-          ${SAM_DEBUG_OPTION} \
-          --parameter-overrides $(cat .params)
-
-      - echo Building and Packaging S3_to_DynamoDB Docker Image/
-      - aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${BUILD_DOCKER_REPO}
-      - docker image build --build-arg BASE_REPO=${BUILD_DOCKER_REPO} --tag ${ECR_REPOSITORY}/${APP_CODE}-${ENVIRONMENT}-s3_to_dynamodb:latest -f docker/S3_to_dynamoDB/Dockerfile .
-      - aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REPOSITORY}
-      - docker push ${ECR_REPOSITORY}/${APP_CODE}-${ENVIRONMENT}-s3_to_dynamodb:latest
-
-
-  post_build:
-    commands:
-      - export PARAMS=Build-1234
-      - echo Build completed on `date`
 artifacts:
   files:
-    - buildspec.yaml
-  base-directory: $REPOSITORY_NAME
+    - buildspec-build.yaml
   discard-paths: yes

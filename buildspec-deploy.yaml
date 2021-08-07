@@ -15,12 +15,12 @@ phases:
     commands:
       # Install Git Client
       - apt-get update
-      - apt-get install --assume-yes git docker sudo
-      - pip3 uninstall --yes awscli
-      - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-      - unzip awscliv2.zip
-      - sudo ./aws/install
-      - pip3 install aws-sam-cli
+      # - apt-get install --assume-yes git docker sudo
+      # - pip3 uninstall --yes awscli
+      # - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+      # - unzip awscliv2.zip
+      # - sudo ./aws/install
+      # - pip3 install aws-sam-cli
   pre_build:
     commands:
       - echo Build started on `date`
@@ -53,45 +53,38 @@ phases:
       - aws --version
       - sam --version
 
-      - echo prepare template parameters
-      - envsubst < template.params > .params.tmp
-      - cat .params.tmp | sed 's/\r//g' | sed 's/\n//g' > .params
-      - cat .params
+      # - echo prepare template parameters
+      # - envsubst < template.params > .params.tmp
+      # - cat .params.tmp | sed 's/\r//g' | sed 's/\n//g' > .params
+      # - cat .params
   
-      - echo Building and Packaging Cloudformation template for environment $ENVIRONMENT
-      - |
-        sam build \
-          --region ${AWS_REGION} \
-          ${SAM_DEBUG_OPTION}
+      # - echo Building and Packaging Cloudformation template for environment $ENVIRONMENT
+      # - |
+      #   sam build \
+      #     --region ${AWS_REGION} \
+      #     ${SAM_DEBUG_OPTION}
       
-      - |
-        sam package \
-          --template-file .aws-sam/build/template.yaml \
-          --output-template-file template-out.yaml \
-          --s3-bucket ${CLOUDFORMATION_BUCKET} \
-          --s3-prefix ${APP_CODE} \
-          --region ${AWS_REGION} \
-          ${SAM_DEBUG_OPTION}
+      # - |
+      #   sam package \
+      #     --template-file .aws-sam/build/template.yaml \
+      #     --output-template-file template-out.yaml \
+      #     --s3-bucket ${CLOUDFORMATION_BUCKET} \
+      #     --s3-prefix ${APP_CODE} \
+      #     --region ${AWS_REGION} \
+      #     ${SAM_DEBUG_OPTION}
 
-      - |
-        sam deploy \
-          --template-file template-out.yaml \
-          --s3-bucket ${CLOUDFORMATION_BUCKET} \
-          --s3-prefix ${APP_CODE} \
-          --stack-name "${APP_CODE}-${ENVIRONMENT}-serverless-template" \
-          --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
-          --no-fail-on-empty-changeset \
-          --profile deployrole \
-          --region ${AWS_REGION} \
-          ${SAM_DEBUG_OPTION} \
-          --parameter-overrides $(cat .params)
-
-      - echo Building and Packaging S3_to_DynamoDB Docker Image/
-      - aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${BUILD_DOCKER_REPO}
-      - docker image build --build-arg BASE_REPO=${BUILD_DOCKER_REPO} --tag ${ECR_REPOSITORY}/${APP_CODE}-${ENVIRONMENT}-s3_to_dynamodb:latest -f docker/S3_to_dynamoDB/Dockerfile .
-      - aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REPOSITORY}
-      - docker push ${ECR_REPOSITORY}/${APP_CODE}-${ENVIRONMENT}-s3_to_dynamodb:latest
-
+      # - |
+      #   sam deploy \
+      #     --template-file template-out.yaml \
+      #     --s3-bucket ${CLOUDFORMATION_BUCKET} \
+      #     --s3-prefix ${APP_CODE} \
+      #     --stack-name "${APP_CODE}-${ENVIRONMENT}-serverless-template" \
+      #     --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+      #     --no-fail-on-empty-changeset \
+      #     --profile deployrole \
+      #     --region ${AWS_REGION} \
+      #     ${SAM_DEBUG_OPTION} \
+      #     --parameter-overrides $(cat .params)
 
 artifacts:
   files:
