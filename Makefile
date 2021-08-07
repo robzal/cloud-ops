@@ -42,7 +42,7 @@ pipelineprereqs: pipelineprereqs-pre
 	--template-file ./cicd/pipeline-prereqs.yaml \
 	--s3-bucket ${CLOUDFORMATION_BUCKET} \
 	--s3-prefix cicd \
-	--stack-name CodePipeline-Prereqs \
+	--stack-name ${ENVIRONMENT}-ipeline-Prereqs \
 	--capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
 	--region ${AWS_REGION} \
 	--profile ${BUILD_PROFILE} \
@@ -65,7 +65,7 @@ pipeline: pipeline-pre
 		--template-file ./cicd/pipeline.yaml \
 		--s3-bucket ${CLOUDFORMATION_BUCKET} \
 		--s3-prefix cicd \
-		--stack-name "${APP_CODE}-${ENVIRONMENT}-Pipeline" \
+		--stack-name "${ENVIRONMENT}-${APP_CODE}-Pipeline" \
 		--capabilities CAPABILITY_NAMED_IAM \
 		--region ${AWS_REGION} \
 		--profile ${BUILD_PROFILE} \
@@ -114,29 +114,3 @@ deploy: deploy-pre build
 		${SAM_DEBUG_OPTION}
 
 .PHONY: deploy
-
-runbuild: build run
-.PHONY: runbuild
-
-run:  deploypre
-
-	sam local start-api \
-		--port ${SAM_API_PORT} \
-		--docker-volume-basedir ${PWD}/.aws-sam/build \
-		--debug-port ${SAM_DEBUG_PORT} \
-		--region ${AWS_REGION} \
-		--parameter-overrides $(shell cat .params) \
-		${SAM_DEBUG_OPTION}
-
-.PHONY: run
-
-dockerimages:
-
-	@echo Logging into ECR
-	VAR=$$(aws ecr get-login --no-include-email --region ${AWS_REGION} --profile ${AWS_PROFILE}) && bash -c "$$VAR"
-	@echo Building and Packaging ReportsEnging Docker Image
-	docker image build --tag ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${APP_CODE}-${ENVIRONMENT}-report_engine:latest -f docker/ReportsEngine/Dockerfile .
-	@echo Pushing ReportEngine Image to ECR
-	docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${APP_CODE}-${ENVIRONMENT}-report_engine:latest
-
-.PHONY: dockerimages

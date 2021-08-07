@@ -33,17 +33,10 @@ phases:
       - aws configure set profile.deployrole.source_profile default
       - aws configure set profile.deployrole.role_arn $DEPLOYMENT_ROLE
 
-      - echo Reading in env file $ENV_FILE
-      - cp $ENV_FILE .env
-      - chmod 777 .env
-      - sed -i '/^export AWS_PROFILE/d' .env
-      # store passed in ENVIRONMENT 
-      - export MYENVIRONMENT=$ENVIRONMENT
-      - export MYAPPCODE=$APP_CODE
-      - . ./.env
-      # override ENVIRONMENT with name passed in
-      - export ENVIRONMENT=$MYENVIRONMENT
-      - export APP_CODE=$MYAPPCODE
+      - sed -i '/^export AWS_PROFILE/d' ./config/.env.$ENVIRONMENT
+      - chmod 777 ./config/.env.$ENVIRONMENT
+      - echo reading in ./config/.env.$ENVIRONMENT
+      - . ./config/.env.$ENVIRONMENT
       - echo Build set for environment $ENVIRONMENT
         
   build:
