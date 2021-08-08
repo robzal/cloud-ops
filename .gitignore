@@ -29,5 +29,5 @@ Thumbs.db
 .params
 .params.tmp
 .env
-.env.ROBZ
+.env.rob
 .template-out.yaml

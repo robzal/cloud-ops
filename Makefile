@@ -42,7 +42,7 @@ pipelineprereqs: pipelineprereqs-pre
 	--template-file ./cicd/pipeline-prereqs.yaml \
 	--s3-bucket ${CLOUDFORMATION_BUCKET} \
 	--s3-prefix cicd \
-	--stack-name ${ENVIRONMENT}-ipeline-Prereqs \
+	--stack-name ${APP_CODE}-pipeline-prereqs \
 	--capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
 	--region ${AWS_REGION} \
 	--profile ${BUILD_PROFILE} \
@@ -65,7 +65,7 @@ pipeline: pipeline-pre
 		--template-file ./cicd/pipeline.yaml \
 		--s3-bucket ${CLOUDFORMATION_BUCKET} \
 		--s3-prefix cicd \
-		--stack-name "${ENVIRONMENT}-${APP_CODE}-Pipeline" \
+		--stack-name "${APP_CODE}-${ENVIRONMENT}-pipeline" \
 		--capabilities CAPABILITY_NAMED_IAM \
 		--region ${AWS_REGION} \
 		--profile ${BUILD_PROFILE} \
